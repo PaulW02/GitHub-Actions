@@ -1,0 +1,25 @@
+name: Artifact Attestation Demo
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  # Krävs för att skapa attesteringar
+  attestations: write
+  # Krävs för att ladda upp artefakten
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create a dummy artifact
+        run: echo "This is my application binary" > my-app.bin
+
+      - name: Upload artifact with attestation
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-application
+          path: my-app.bin
