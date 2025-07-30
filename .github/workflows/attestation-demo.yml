@@ -1,16 +1,16 @@
-name: Bygg & Attestera Artefakt (utan --fulcio)
+name: Bygg & Attestera Fil (med GitHub Provenance)
 
 on:
   push:
     branches: [ main ]
 
+permissions:
+  id-token: write  # 🧠 Nödvändigt för provenance
+  contents: write
+
 jobs:
   build-and-attest:
     runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write # 👈 krävs för OIDC keyless signing
-      contents: read
 
     steps:
       - name: 🔄 Klona repo
@@ -19,37 +19,9 @@ jobs:
       - name: 🛠️ Skapa artefakt
         run: echo "Hej från GitHub Actions!" > artefakt.txt
 
-      - name: 📄 Skapa predicate (metadata)
-        run: |
-          echo '{
-            "buildType": "github-actions",
-            "description": "Exempelfil skapad i GitHub Actions",
-            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-          }' > predicate.json
-
-      - name: 🧪 Installera Cosign (v2.2.1)
-        run: |
-          COSIGN_VERSION="v2.2.1"
-          curl -sSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o cosign
-          chmod +x cosign
-          sudo mv cosign /usr/local/bin/
-
-      - name: 🔐 Attestera artefakt utan nyckel
-        run: |
-          cosign attest \
-            --yes \
-            --predicate predicate.json \
-            --type custom \
-            artefakt.txt
-
-      - name: 📦 Ladda upp artefakt
+      - name: 📦 Ladda upp artefakt med provenance
         uses: actions/upload-artifact@v4
         with:
           name: artefakt
           path: artefakt.txt
-
-      - name: 📦 Ladda upp attestering
-        uses: actions/upload-artifact@v4
-        with:
-          name: attestering
-          path: "*.intoto.jsonl"
+          provenance: true  # 🧠 Aktiverar inbyggd attestering
