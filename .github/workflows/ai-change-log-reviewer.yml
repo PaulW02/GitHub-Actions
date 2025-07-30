@@ -1,0 +1,68 @@
+name: Skapa changelog med Gemini
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔄 Klona repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🧠 Hämta senaste två taggar
+        id: tags
+        run: |
+          tags=$(git tag --sort=-creatordate | head -n 2)
+          echo "previous=$(echo $tags | awk '{print $2}')" >> $GITHUB_OUTPUT
+          echo "current=$(echo $tags | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: 📜 Hämta commit-meddelanden
+        id: commits
+        run: |
+          messages=$(git log ${{ steps.tags.outputs.previous }}..${{ steps.tags.outputs.current }} --pretty=format:"- %s" | tail -n 50)
+          echo "messages<<EOF" >> $GITHUB_OUTPUT
+          echo "$messages" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 🤖 Generera changelog med Gemini
+        id: gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          changelog=$(curl -s https://gemini.googleapis.com/v1/chat/completions \
+            -H "Authorization: Bearer $GEMINI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d @- <<EOF
+          {
+            "model": "gemini-2.0-flash",
+            "messages": [
+              {
+                "role": "system",
+                "content": "Du är en professionell changelog-skapare. Skapa en tydlig och sammanfattande changelog från commit-meddelanden."
+              },
+              {
+                "role": "user",
+                "content": "${{ steps.commits.outputs.messages }}"
+              }
+            ]
+          }
+EOF
+          | jq -r '.choices[0].message.content')
+
+          echo "$changelog" > changelog.md
+          echo "Changelog genererad 🎉"
+          cat changelog.md
+
+      - name: 💾 Ladda upp changelog som artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: changelog.md
