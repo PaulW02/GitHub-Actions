@@ -1,27 +1,25 @@
-name: Bygg & Attestera Fil (med GitHub Provenance)
+name: Artifact Attestation Demo
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 permissions:
-  id-token: write  # 🧠 Nödvändigt för provenance
-  contents: write
+  # Krävs för att skapa attesteringar
+  attestations: write
+  # Krävs för att ladda upp artefakten
+  contents: read
 
 jobs:
-  build-and-attest:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 🔄 Klona repo
-        uses: actions/checkout@v4
+      - name: Create a dummy artifact
+        run: echo "This is my application binary" > my-app.bin
 
-      - name: 🛠️ Skapa artefakt
-        run: echo "Hej från GitHub Actions!" > artefakt.txt
-
-      - name: 📦 Ladda upp artefakt med provenance
+      - name: Upload artifact with attestation
         uses: actions/upload-artifact@v4
         with:
-          name: artefakt
-          path: artefakt.txt
-          provenance: true  # 🧠 Aktiverar inbyggd attestering
+          name: my-application
+          path: my-app.bin
