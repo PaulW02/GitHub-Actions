@@ -1,4 +1,4 @@
-name: Bygg & Attestera Artefakt
+name: Bygg & Attestera Artefakt (utan --fulcio)
 
 on:
   push:
@@ -8,6 +8,10 @@ jobs:
   build-and-attest:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write # 👈 krävs för OIDC keyless signing
+      contents: read
+
     steps:
       - name: 🔄 Klona repo
         uses: actions/checkout@v4
@@ -15,11 +19,13 @@ jobs:
       - name: 🛠️ Skapa artefakt
         run: echo "Hej från GitHub Actions!" > artefakt.txt
 
-      - name: 📦 Ladda upp artefakt
-        uses: actions/upload-artifact@v4
-        with:
-          name: artefakt
-          path: artefakt.txt
+      - name: 📄 Skapa predicate (metadata)
+        run: |
+          echo '{
+            "buildType": "github-actions",
+            "description": "Exempelfil skapad i GitHub Actions",
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+          }' > predicate.json
 
       - name: 🧪 Installera Cosign (v2.2.1)
         run: |
@@ -28,25 +34,19 @@ jobs:
           chmod +x cosign
           sudo mv cosign /usr/local/bin/
 
-      - name: 🔎 Visa cosign-version
-        run: cosign version
-
-      - name: 📄 Skapa predicate-fil (metadata)
-        run: |
-          echo '{
-            "buildType": "github-actions",
-            "description": "Exempelfil skapad i GitHub Actions",
-            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-          }' > artifact-predicate.json
-
-      - name: 🔐 Attestera artefakt med Cosign (keyless / Fulcio)
+      - name: 🔐 Attestera artefakt utan nyckel
         run: |
           cosign attest \
             --yes \
-            --fulcio \
-            --predicate artifact-predicate.json \
+            --predicate predicate.json \
             --type custom \
             artefakt.txt
+
+      - name: 📦 Ladda upp artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: artefakt
+          path: artefakt.txt
 
       - name: 📦 Ladda upp attestering
         uses: actions/upload-artifact@v4
