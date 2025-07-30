@@ -62,3 +62,9 @@ jobs:
 
           jq -r '.candidates[0].content.parts[0].text' response.json > changelog.md
           cat changelog.md
+          
+      - name: 💾 Ladda upp changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: changelog.md
