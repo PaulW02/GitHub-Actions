@@ -1,39 +1,39 @@
-name: Skapa changelog med Gemini
+name: Uppdatera changelog med Gemini
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # triggas på taggar som börjar med "v"
 
 permissions:
-  contents: read
+  contents: write  # För att kunna pusha ändringar
 
 jobs:
   changelog:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🔄 Klona repo
+      - name: Klona repo med full historik
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🧠 Hämta senaste två taggar
+      - name: Hämta senaste två taggar
         id: tags
         run: |
           tags=$(git tag --sort=-creatordate | head -n 2)
           echo "previous=$(echo $tags | awk '{print $2}')" >> $GITHUB_OUTPUT
           echo "current=$(echo $tags | awk '{print $1}')" >> $GITHUB_OUTPUT
 
-      - name: 📜 Hämta commit-meddelanden
+      - name: Hämta commit-meddelanden
         run: |
           git log ${{ steps.tags.outputs.previous }}..${{ steps.tags.outputs.current }} --pretty=format:"- %s" | tail -n 50 > messages.txt
 
-      - name: 🤖 Skicka till Gemini 2.0 Flash
+      - name: Skapa changelog med Gemini
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "📤 Förbereder AI-fråga..."
+          echo "Förbereder prompt..."
 
           PROMPT=$(sed ':a;N;$!ba;s/\n/\\n/g' messages.txt)
 
@@ -49,7 +49,7 @@ jobs:
             ]
           }' > payload.json
 
-          echo "📡 Anropar Gemini API..."
+          echo "Anropar Gemini API..."
 
           curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \
             -H "Content-Type: application/json" \
@@ -57,14 +57,24 @@ jobs:
             -X POST \
             -d @payload.json > response.json
 
-          echo "📥 Rått svar:"
-          cat response.json
+          echo "Extraherar changelog..."
+          AI_CHANGELOG=$(jq -r '.candidates[0].content.parts[0].text' response.json)
 
-          jq -r '.candidates[0].content.parts[0].text' response.json > changelog.md
+          # Lägg till ny changelog längst ner i filen, eller skapa filen om den inte finns
+          echo -e "\n## Version ${{ steps.tags.outputs.current }} ($(date +'%Y-%m-%d'))\n" >> changelog.md
+          echo "$AI_CHANGELOG" >> changelog.md
+
           cat changelog.md
-          
-      - name: 💾 Ladda upp changelog
-        uses: actions/upload-artifact@v4
-        with:
-          name: changelog
-          path: changelog.md
+
+      - name: Commit och push changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add changelog.md
+          if git diff --cached --quiet; then
+            echo "Inga ändringar i changelog.md, hoppar commit"
+          else
+            git commit -m "Uppdatera changelog för ${{ steps.tags.outputs.current }}"
+            git push
+          fi
