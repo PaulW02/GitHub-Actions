@@ -1,0 +1,21 @@
+name: Main CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        run: echo "Tests are running..."
+
+  call-reusable-deploy:
+    needs: build-and-test # Körs efter testerna
+    uses: ./.github/workflows/reusable-deploy.yml@main
+    with:
+      environment: staging
+    secrets:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}

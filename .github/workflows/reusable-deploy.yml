@@ -1,0 +1,26 @@
+name: Reusable Deploy Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'The environment to deploy to'
+        required: true
+        type: string
+    secrets:
+      DEPLOY_KEY:
+        description: 'The key for deployment'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: "Deploying to ${{ inputs.environment }}"
+        run: |
+          echo "Starting deployment to ${{ inputs.environment }}..."
+          echo "Using secret key: ${{ secrets.DEPLOY_KEY != '' && 'Provided' || 'Not Provided' }}"
+          echo "Deployment complete!"
