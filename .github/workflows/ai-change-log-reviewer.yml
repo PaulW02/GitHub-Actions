@@ -26,43 +26,46 @@ jobs:
           echo "current=$(echo $tags | awk '{print $1}')" >> $GITHUB_OUTPUT
 
       - name: 📜 Hämta commit-meddelanden
-        id: commits
         run: |
-          messages=$(git log ${{ steps.tags.outputs.previous }}..${{ steps.tags.outputs.current }} --pretty=format:"- %s" | tail -n 50)
-          echo "messages<<EOF" >> $GITHUB_OUTPUT
-          echo "$messages" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          git log ${{ steps.tags.outputs.previous }}..${{ steps.tags.outputs.current }} --pretty=format:"- %s" | tail -n 50 > messages.txt
 
-      - name: 🤖 Generera changelog med Gemini
+      - name: 🤖 Skicka till Gemini 2.0 Flash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "🔍 Skickar commits till Gemini..."
+          echo "📤 Förbereder AI-fråga..."
+
+          PROMPT=$(sed ':a;N;$!ba;s/\n/\\n/g' messages.txt)
 
           cat <<EOF > payload.json
-          {
-            "model": "gemini-2.0-flash",
-            "messages": [
-              {
-                "role": "system",
-                "content": "Du är en professionell changelog-skapare. Skapa en tydlig och sammanfattande changelog från commit-meddelanden."
-              },
-              {
-                "role": "user",
-                "content": "${{ steps.commits.outputs.messages }}"
-              }
-            ]
-          }
-          EOF
+{
+  "contents": [
+    {
+      "parts": [
+        {
+          "text": "Du är en professionell changelog-skapare. Skapa en tydlig changelog från följande commit-meddelanden:\n$PROMPT"
+        }
+      ]
+    }
+  ]
+}
+EOF
 
-          response=$(curl -s https://gemini.googleapis.com/v1/chat/completions \
-            -H "Authorization: Bearer $GEMINI_API_KEY" \
+          echo "📡 Anropar Gemini API..."
+
+          curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \
             -H "Content-Type: application/json" \
-            -d @payload.json)
+            -H "X-goog-api-key: $GEMINI_API_KEY" \
+            -X POST \
+            -d @payload.json > response.json
 
-          echo "$response" | jq -r '.choices[0].message.content' > changelog.md
+          echo "📥 Rått svar:"
+          cat response.json
 
-      - name: 💾 Ladda upp changelog som artefakt
+          jq -r '.candidates[0].content.parts[0].text' response.json > changelog.md
+          cat changelog.md
+
+      - name: 💾 Ladda upp changelog
         uses: actions/upload-artifact@v4
         with:
           name: changelog
