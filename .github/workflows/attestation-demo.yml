@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create a dummy artifact
-        run: echo "This is my application binary" > my-app.bin
+        run: echo "This is my application binary" > my-app.txt
 
       - name: Upload artifact with attestation
         uses: actions/upload-artifact@v4
         with:
           name: my-application
-          path: my-app.bin
+          path: my-app.txt
