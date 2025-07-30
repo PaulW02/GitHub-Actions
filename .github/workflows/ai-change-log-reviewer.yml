@@ -11,6 +11,7 @@ permissions:
 jobs:
   changelog:
     runs-on: ubuntu-latest
+
     steps:
       - name: 🔄 Klona repo
         uses: actions/checkout@v4
@@ -32,14 +33,13 @@ jobs:
           echo "$messages" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-            - name: 🤖 Generera changelog med Gemini
-        id: gemini
+      - name: 🤖 Generera changelog med Gemini
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           echo "🔍 Skickar commits till Gemini..."
 
-          request_body=$(cat <<EOF
+          cat <<EOF > payload.json
 {
   "model": "gemini-2.0-flash",
   "messages": [
@@ -54,14 +54,16 @@ jobs:
   ]
 }
 EOF
-)
 
           response=$(curl -s https://gemini.googleapis.com/v1/chat/completions \
             -H "Authorization: Bearer $GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
-            -d "$request_body")
+            -d @payload.json)
 
           echo "$response" | jq -r '.choices[0].message.content' > changelog.md
 
-          echo "📝 Changelog:"
-          cat changelog.md
+      - name: 💾 Ladda upp changelog som artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: changelog.md
