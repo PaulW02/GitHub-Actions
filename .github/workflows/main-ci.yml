@@ -14,7 +14,7 @@ jobs:
 
   call-reusable-deploy:
     needs: build-and-test # Körs efter testerna
-    uses: ./.github/workflows/reusable-deploy.yml@main
+    uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: staging
     secrets:
