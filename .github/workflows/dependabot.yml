@@ -1,0 +1,7 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"       # Vilken typ av paket (npm, maven, pip, docker, osv)
+    directory: "/"                 # Var i repot ligger paketfilen (t.ex. package.json)
+    schedule:
+      interval: "weekly"           # Hur ofta Dependabot kollar efter uppdateringar (daily, weekly, monthly)
+    open-pull-requests-limit: 5
