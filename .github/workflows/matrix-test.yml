@@ -3,7 +3,7 @@ name: Matrix Test
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
   test:

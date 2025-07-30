@@ -1,0 +1,24 @@
+name: Job Summary Demo
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate a summary
+        run: |
+          echo "### 🚀 Deployment Report" >> $GITHUB_STEP_SUMMARY
+          echo "A new version has been deployed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY # Tom rad
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| API     | ✅ OK   |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend| ✅ OK   |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View details in the [build log](#)." >> $GITHUB_STEP_SUMMARY
