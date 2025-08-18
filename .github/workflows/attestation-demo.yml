@@ -34,7 +34,7 @@ jobs:
 
       - name: Attest file (keyless)
         run: |
-          cosign attest \
+          cosign attest-blob \
             --predicate <(echo '{"build":"github-actions"}') \
             --type slsaprovenance \
             ./target/my-app.bin > attest.slsa
