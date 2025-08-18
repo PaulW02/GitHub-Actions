@@ -1,25 +1,45 @@
-name: Artifact Attestation Demo
+name: build-and-attest
 
 on:
   push:
-    branches:
-      - main
-
-permissions:
-  # Krävs för att skapa attesteringar
-  attestations: write
-  # Krävs för att ladda upp artefakten
-  contents: read
+    tags:
+      - "v*"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write      # krävs för keyless signing
+      contents: read
+
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+
       - name: Create a dummy artifact
         run: echo "This is my application binary" > my-app.bin
 
-      - name: Upload artifact with attestation
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: my-application
+          name: my-app
           path: my-app.bin
+
+      - name: Install cosign
+        run: |
+          wget https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
+          chmod +x cosign-linux-amd64
+          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+
+      - name: Attest artifact (keyless)
+        run: |
+          cosign attest \
+            --predicate <(echo '{"build":"github-actions"}') \
+            --type slsaprovenance \
+            --keyless \
+            my-app:$(git rev-parse --short HEAD)
