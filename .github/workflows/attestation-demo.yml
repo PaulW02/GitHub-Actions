@@ -36,7 +36,6 @@ jobs:
         run: |
           cosign attest-blob \
             --predicate <(echo '{"build":"github-actions"}') \
-            --type slsaprovenance \
             my-app.bin > attest.slsa
 
       - name: Upload BIN and attest file as artifacts
