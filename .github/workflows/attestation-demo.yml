@@ -17,13 +17,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create a dummy artifact
-        run: echo "This is my application binary" > /target/my-app.bin
+        run: echo "This is my application binary" > my-app.bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: my-app
-          path: /target/my-app.bin
+          path: my-app.bin
 
       - name: Install cosign
         run: |
@@ -37,12 +37,12 @@ jobs:
           cosign attest-blob \
             --predicate <(echo '{"build":"github-actions"}') \
             --type slsaprovenance \
-            ./target/my-app.bin > attest.slsa
+            my-app.bin > attest.slsa
 
       - name: Upload BIN and attest file as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: signed-build
           path: |
-            target/my-app.bin
+            my-app.bin
             attest.slsa
