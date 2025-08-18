@@ -17,13 +17,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create a dummy artifact
-        run: echo "This is my application binary" > my-app.bin
+        run: echo "This is my application binary" > /target/my-app.bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: my-app
-          path: my-app.bin
+          path: /target/my-app.bin
 
       - name: Install cosign
         run: |
