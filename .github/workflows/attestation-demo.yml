@@ -31,10 +31,9 @@ jobs:
           chmod +x cosign-linux-amd64
           sudo mv cosign-linux-amd64 /usr/local/bin/cosign
 
-      - name: Attest artifact (keyless)
+      - name: Attest artifact (keyless, modern cosign)
         run: |
           cosign attest \
             --predicate <(echo '{"build":"github-actions"}') \
             --type slsaprovenance \
-            --keyless \
             my-app:$(git rev-parse --short HEAD)
