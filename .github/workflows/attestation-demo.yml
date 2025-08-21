@@ -1,48 +1,34 @@
-name: build-and-attest
+name: Build and Attest Artifact
 
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
+
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write      # krävs för keyless signing
-      contents: read
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Create a dummy artifact
-        run: echo "This is my application binary" > my-app.bin
+      - name: Build artifact (example)
+        run: |
+          echo "This is my binary" > artifact.bin
 
-      - name: Upload artifact
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'artifact.bin'
+
+      - name: Upload artifact (for retrieval)
         uses: actions/upload-artifact@v4
         with:
-          name: my-app
-          path: my-app.bin
-
-      - name: Install cosign
-        run: |
-          wget https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
-          chmod +x cosign-linux-amd64
-          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
-          cosign version
-
-      - name: Attest file (keyless)
-        run: |
-          cosign attest-blob \
-            --yes \
-            --predicate <(echo '{"build":"github-actions"}') \
-            my-app.bin > attest.slsa
-
-      - name: Upload BIN and attest file as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: signed-build
-          path: |
-            my-app.bin
-            attest.slsa
+          name: artifact
+          path: artifact.bin
