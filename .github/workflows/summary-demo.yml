@@ -20,6 +20,6 @@ jobs:
           echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| API     | ✅ OK   |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend| ✅ OK   |" >> $GITHUB_STEP_SUMMARY
-          echo "Irori assemble!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Irori assemble!" >> $GITHUB_STEP_SUMMARY
           echo "View details in the [build log](#)." >> $GITHUB_STEP_SUMMARY
