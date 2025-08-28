@@ -36,9 +36,20 @@ jobs:
 
       - name: Package artifact
         run: |
-          # Skapa en zip-fil av dist/ och package.json
           mkdir -p artifact
-          cp -r dist package.json package-lock.json artifact/
+
+          # Om dist/ finns (TypeScript/bundlad build)
+          if [ -d dist ]; then
+            cp -r dist artifact/
+          else
+            # Annars ta src/ direkt
+            cp -r src artifact/
+          fi
+
+          # Lägg till package.json och lockfile
+          cp package.json package-lock.json artifact/
+
+          # Skapa zip
           zip -r artifact/node-project.zip artifact/*
 
       - name: Generate artifact attestation
