@@ -20,7 +20,7 @@ jobs:
 
       - name: Build artifact (example)
         run: |
-          echo "This is the Irori presentation artifact" > project-artifact.bin
+          echo "This is the OFFICIAL Irori presentation artifact" > project-artifact.bin
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
