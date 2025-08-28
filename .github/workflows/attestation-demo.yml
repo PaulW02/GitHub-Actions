@@ -18,45 +18,17 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'  # välj lämplig version
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
+      - name: Build artifact (example)
         run: |
-          # Om det är TypeScript-projekt
-          if [ -f tsconfig.json ]; then
-            npx tsc
-          fi
-          # Om du använder bundler som esbuild/webpack/rollup, kör dess build här
-
-      - name: Package artifact
-        run: |
-          mkdir -p artifact
-
-          # Kopiera källkod/dist
-          if [ -d dist ]; then
-            cp -r dist artifact/
-          else
-            cp -r src artifact/
-          fi
-
-          cp package.json package-lock.json artifact/
-
-          # Skapa zip
-          zip -r artifact/node-project.zip artifact/*
+          echo "This is my binary" > project-artifact.bin
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: 'artifact/node-project.zip'
+          subject-path: 'project-artifact.bin'
 
       - name: Upload artifact (for retrieval)
         uses: actions/upload-artifact@v4
         with:
-          name: artifact
-          path: artifact/node-project.zip
+          name: project-artifact
+          path: project-artifact.bin
