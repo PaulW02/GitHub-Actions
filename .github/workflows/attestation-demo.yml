@@ -38,15 +38,13 @@ jobs:
         run: |
           mkdir -p artifact
 
-          # Om dist/ finns (TypeScript/bundlad build)
+          # Kopiera källkod/dist
           if [ -d dist ]; then
             cp -r dist artifact/
           else
-            # Annars ta src/ direkt
             cp -r src artifact/
           fi
 
-          # Lägg till package.json och lockfile
           cp package.json package-lock.json artifact/
 
           # Skapa zip
